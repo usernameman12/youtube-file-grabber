@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Downloader</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        h1 {
+            color: #4CAF50;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            font-size: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #status {
+            font-size: 1.1rem;
+            margin-top: 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .container {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .container p {
+            text-align: center;
+        }
+
+        /* Error message styling */
+        .error {
+            color: #f44336;
+        }
+
+        /* Success message styling */
+        .success {
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>YouTube Video Downloader</h1>
+        <p>Enter a YouTube URL below to download the video:</p>
+        <input type="text" id="youtube-url" placeholder="Enter YouTube URL" />
+        <button onclick="downloadVideo()">Download Video</button>
+        <p id="status"></p>
+    </div>
+
+    <script>
+        function downloadVideo() {
+            const url = document.getElementById('youtube-url').value;
+            const statusText = document.getElementById('status');
+
+            // Reset status text
+            statusText.textContent = '';
+            statusText.className = ''; // Reset any previous styling
+
+            if (!url) {
+                statusText.textContent = 'Please enter a valid YouTube URL.';
+                statusText.classList.add('error');
+                return;
+            }
+
+            // Send POST request to the backend (Vercel function)
+            fetch('/api/download', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to download the video.');
+                }
+                return response.blob();  // Get the video file as a blob
+            })
+            .then(blob => {
+                // Create a link element to trigger the download of the video file
+                const videoUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = videoUrl;
+                a.download = 'downloaded_video.mp4';  // Name the file for download
+                document.body.appendChild(a);
+                a.click();  // Automatically click to download the file
+                a.remove();  // Remove the link element
+                statusText.textContent = 'Download started...';
+                statusText.classList.add('success');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                statusText.textContent = 'Error: ' + error.message;
+                statusText.classList.add('error');
+            });
+        }
+    </script>
+</body>
+</html>
